@@ -47,13 +47,38 @@ def do_covisibility_clustering(frame_ids: List[int],
     clusters = sorted(clusters, key=len, reverse=True)
     return clusters
 
+class Localizer:
 
-class QueryLocalizer:
-    def __init__(self, reconstruction, config=None):
+    def __init__(self, reconstruction, config=None) -> None:
         self.reconstruction = reconstruction
         self.config = config or {}
 
+    def localizer(self, points2D_all, points2D_idxs, points3D_id, query_camera):
+        raise NotImplemented
+
+class QueryLocalizer(Localizer):
+    def __init__(self, reconstruction, config=None):
+        super().__init__()
+
     def localize(self, points2D_all, points2D_idxs, points3D_id, query_camera):
+        points2D = points2D_all[points2D_idxs]
+        points3D = [self.reconstruction.points3D[j].xyz for j in points3D_id]
+        ret = pycolmap.absolute_pose_estimation(
+            points2D, points3D, query_camera,
+            estimation_options=self.config.get('estimation', {}),
+            refinement_options=self.config.get('refinement', {}),
+        )
+
+        print(ret)
+        
+        return ret
+
+class P3PLocalizer:
+
+    def __init__(self, reconstruction, config=None) -> None:
+        super().__init__()
+
+    def localizer(self, points2D_all, points2D_idxs, points3D_id, query_camera):
         points2D = points2D_all[points2D_idxs]
         points3D = [self.reconstruction.points3D[j].xyz for j in points3D_id]
         ret = pycolmap.absolute_pose_estimation(
